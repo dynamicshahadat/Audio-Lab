@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="GearBlizz Audio Lab: free in-browser headphone and microphone tests. Nothing is uploaded.">
+<title>GearBlizz Audio Lab — Headphone &amp; Microphone Tester</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23ED1C24'/%3E%3Cpath d='M5 16h4l3-8 4 16 3-12 2 4h6' stroke='%23fff' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#090909;--card:#111214;--s2:#191B1F;--red:#ED1C24;--redh:#FF3038;--tx:#F5F5F5;--tx2:#9298A2;--bd:#292C31;--ok:#48C78E;--warn:#F0B429}
+*{box-sizing:border-box}
+html{color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.55 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif;padding:env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0)}
+h1{font-size:clamp(1.6rem,4vw,2.4rem);line-height:1.1;margin:.2em 0 .3em;letter-spacing:.01em}
+h2{font-size:1.05rem;margin:0 0 .5em}
+h3{font-size:.9rem;margin:1em 0 .3em;color:var(--tx2);font-weight:600}
+p{margin:.3em 0 .7em}
+.mut{color:var(--tx2)}.small{font-size:.85rem}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;padding:12px 20px;border-bottom:1px solid var(--bd);background:var(--bg);position:sticky;top:0;z-index:5}
+.brand{display:flex;align-items:baseline;gap:8px;font-weight:800;letter-spacing:.08em;white-space:nowrap}
+.brand b{font-size:1.15rem}.brand span{color:var(--red);font-size:.85rem}
+#menu{display:flex;align-items:center;gap:10px 20px;flex:1;min-width:0}
+nav{display:flex;gap:4px;overflow-x:auto;flex:1;min-width:0}
+.burger{display:none;width:44px;height:40px;margin-left:auto;background:transparent;border:1px solid var(--bd);border-radius:8px;cursor:pointer;flex-direction:column;justify-content:center;align-items:center;gap:5px;padding:0}
+.burger:hover{border-color:var(--red)}
+.burger span{display:block;width:20px;height:2px;background:var(--tx);border-radius:2px;transition:transform .2s,opacity .2s}
+.burger[aria-expanded=true] span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.burger[aria-expanded=true] span:nth-child(2){opacity:0}
+.burger[aria-expanded=true] span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+@media(max-width:820px){.burger{display:inline-flex}#menu{display:none;flex:0 0 100%;flex-direction:column;align-items:stretch;padding:6px 0 4px}#menu.open{display:flex}nav{flex-direction:column;overflow:visible}nav a{padding:12px 14px}#clearAll{width:100%}}
+nav a{color:var(--tx2);text-decoration:none;padding:7px 12px;border-radius:8px;white-space:nowrap;border:1px solid transparent;transition:color .15s,border-color .15s}
+nav a:hover{color:var(--tx)}
+nav a[aria-current=page]{color:var(--tx);background:var(--s2);border-color:var(--bd);box-shadow:inset 0 -2px 0 var(--red)}
+main{max-width:1100px;margin:0 auto;padding:20px}
+.card,.warn{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:18px;margin-bottom:16px}
+.warn{border-color:var(--red);background:#1a0f10}
+.warn.flash{animation:fl .9s}
+@keyframes fl{30%{background:#3a1215}}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.g2>.card,.g4>.card{margin:0}
+.g2,.g4{margin-bottom:16px}
+@media(max-width:820px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.g2{grid-template-columns:1fr}main{padding:14px}header{padding:10px 14px}}
+.row{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin:8px 0}
+.btn{background:var(--red);color:#fff;border:1px solid var(--red);padding:9px 16px;border-radius:8px;font:inherit;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s}
+.btn:hover:not(:disabled){background:var(--redh);border-color:var(--redh)}
+.btn.ghost{background:transparent;color:var(--tx);border-color:var(--bd)}
+.btn.ghost:hover:not(:disabled){background:var(--s2);border-color:var(--red)}
+.btn[aria-pressed=true]{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--red)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--redh);outline-offset:2px}
+select,input[type=number]{background:var(--s2);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;font:inherit;max-width:100%}
+input[type=range]{accent-color:var(--red);width:180px;max-width:100%}
+label{display:inline-flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chk{align-items:flex-start;color:var(--tx2);font-size:.9rem}
+.chip{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.72rem;font-weight:700;letter-spacing:.06em;border:1px solid;white-space:nowrap}
+.chip.ok{color:var(--ok);border-color:var(--ok)}.chip.run{color:#fff;background:var(--red);border-color:var(--red)}
+.chip.rec{color:#fff;background:var(--red);border-color:var(--red);animation:pl 1.2s infinite}
+.chip.warn{color:var(--warn);border-color:var(--warn)}.chip.off{color:var(--tx2);border-color:var(--bd)}
+@keyframes pl{50%{opacity:.55}}
+.lamps{display:flex;gap:12px;margin:6px 0}
+.lamp{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:1.2rem;background:var(--s2);color:var(--tx2);border:2px solid var(--bd);transition:all .1s}
+.lamp.on{background:var(--red);color:#fff;border-color:var(--redh)}
+.bal{position:relative;height:10px;background:var(--s2);border:1px solid var(--bd);border-radius:6px;margin:16px 8px 6px}
+.bal::after{content:"";position:absolute;left:50%;top:-5px;bottom:-5px;width:1px;background:var(--tx2)}
+.bal i{position:absolute;top:-6px;width:20px;height:20px;margin-left:-10px;border-radius:50%;background:var(--red);left:50%;opacity:.3;transition:left .08s}
+.bl{display:flex;justify-content:space-between;color:var(--tx2);font-size:.8rem}
+.big{font:700 2.2rem/1.1 ui-monospace,Consolas,monospace;margin:4px 0}.dim{color:var(--tx2)}
+.nowbar{position:sticky;bottom:0;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between;box-shadow:0 -8px 20px #000a}
+canvas{width:100%;height:150px;display:block;background:var(--bg);border:1px solid var(--bd);border-radius:8px}
+.meter{position:relative;height:18px;background:var(--s2);border:1px solid var(--bd);border-radius:6px;overflow:hidden}
+.meter i{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--ok)}
+.meter b{position:absolute;top:0;bottom:0;width:2px;background:var(--tx);left:0}
+.ticks{display:flex;justify-content:space-between;color:var(--tx2);font-size:.72rem;margin-top:3px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
+.stats div{background:var(--s2);border-radius:8px;padding:8px 12px}
+.stats small{display:block;color:var(--tx2)}.stats b{font:600 1.05rem ui-monospace,Consolas,monospace}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--bd);margin-right:6px}.dot.on{background:var(--ok)}
+.time{font:600 1rem ui-monospace,Consolas,monospace}
+.prompt{background:var(--s2);border-left:3px solid var(--red);padding:10px 14px;border-radius:6px}
+.bar{height:6px;background:var(--s2);border-radius:4px;overflow:hidden;margin:8px 0}.bar i{display:block;height:100%;width:0;background:var(--red)}
+pre.out{white-space:pre-wrap;background:var(--s2);border-radius:8px;padding:12px;font-size:.82rem;overflow-x:auto;margin:8px 0 0}
+ul.l{list-style:none;padding:0;margin:0}ul.l li{padding:6px 0;border-bottom:1px solid var(--bd);overflow-wrap:anywhere}
+ul.l li.ok::before,ul.l li.warn::before,ul.l li.bad::before{content:"● ";}
+ul.l li.ok::before{color:var(--ok)}ul.l li.warn::before{color:var(--warn)}ul.l li.bad::before{color:var(--redh)}
+ol{padding-left:1.2em;margin:0}ol li{margin-bottom:6px}
+footer{text-align:center;color:var(--tx2);padding:24px 16px;font-size:.85rem}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0));transform:translate(-50%,20px);background:var(--s2);border:1px solid var(--red);border-radius:8px;padding:10px 16px;opacity:0;pointer-events:none;transition:all .2s;z-index:9;max-width:92vw}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><b>GEARBLIZZ</b><span>AUDIO LAB</span></div>
+  <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="menu"><span></span><span></span><span></span></button>
+  <div id="menu">
+    <nav id="nav" aria-label="Sections">
+      <a href="#overview">Overview</a><a href="#headphone">Headphone Test</a><a href="#mic">Microphone Test</a><a href="#studio">Recording Studio</a><a href="#diag">Audio Diagnostics</a>
+    </nav>
+    <button class="btn ghost" id="clearAll">Clear all test data</button>
+  </div>
+</header>
+<main>
+
+<section id="p-overview">
+  <h1>TEST YOUR SOUND.<br>KNOW YOUR GEAR.</h1>
+  <p class="mut">Headphone and microphone tests that run entirely in your browser. No account, no uploads.</p>
+  <div class="warn" role="note"><b>Keep your volume low before starting. Increase it gradually. Never expose your ears to loud test tones.</b></div>
+  <div class="g4">
+    <div class="card"><h3>Microphone permission</h3><span class="chip off" id="permChip">…</span><p class="small mut" id="permTxt"></p></div>
+    <div class="card"><h3>Audio system</h3><span class="chip off" id="audChip">…</span><p class="small mut" id="audTxt"></p></div>
+    <div class="card"><h3>Input devices</h3><div class="big" id="inCount">—</div></div>
+    <div class="card"><h3>Output devices</h3><div class="big" id="outCount">—</div></div>
+  </div>
+  <div class="g2">
+    <div class="card"><h2>Audio devices</h2>
+      <button class="btn" id="detect">Detect devices</button>
+      <p class="small mut">Browsers hide device names until you allow microphone access. Detect devices asks for access once, then releases the microphone right away.</p>
+      <h3>Inputs</h3><ul class="l" id="inList"></ul><h3>Outputs</h3><ul class="l" id="outList"></ul></div>
+    <div class="card"><h2>How to test</h2><ol>
+      <li>Lower your volume, open Headphone Test and confirm the volume warning.</li>
+      <li>Play left, right and both channels. Each side should sound only on its own earcup.</li>
+      <li>Try the stereo, frequency, bass, noise and balance tests.</li>
+      <li>Open Microphone Test, press Start, allow access, then speak and watch the level meter.</li>
+      <li>Record in Recording Studio, play it back and download it.</li>
+      <li>Run the noise and speech checks in Audio Diagnostics.</li></ol></div>
+  </div>
+  <div class="card"><h2>Privacy</h2><p>Your microphone audio stays on your device. GearBlizz does not upload, store or transmit your recordings.</p><p class="small mut">The microphone only turns on when you press a button, and it is released when you stop or leave the microphone sections.</p></div>
+</section>
+
+<section id="p-headphone" hidden>
+  <h1>Headphone test</h1>
+  <div class="warn" id="warnBox"><b>Keep your volume low before starting. Increase it gradually. Never expose your ears to loud test tones.</b>
+    <p class="small">Start at low volume. High-frequency and loud sounds can damage hearing.</p>
+    <label><input type="checkbox" id="ack"> I have lowered my volume and I'm ready to test</label>
+    <div class="row" id="sinkRow" hidden><label>Output device <select id="sink"></select></label></div></div>
+
+  <div class="g2">
+    <div class="card"><h2>Left / right channel</h2><p class="mut small">A 440 Hz tone on one side at a time. Tap an active button again to stop.</p>
+      <div class="lamps"><span class="lamp lampL">L</span><span class="lamp lampR">R</span></div>
+      <div class="row">
+        <button class="btn" data-play='{"kind":"osc","freq":440,"pan":-1,"label":"Left channel · 440 Hz"}'>Left</button>
+        <button class="btn" data-play='{"kind":"osc","freq":440,"pan":1,"label":"Right channel · 440 Hz"}'>Right</button>
+        <button class="btn" data-play='{"kind":"osc","freq":440,"pan":0,"label":"Both channels · 440 Hz"}'>Both</button></div></div>
+
+    <div class="card"><h2>Stereo test</h2><p class="mut small">Alternating sound switches sides every 0.8 s. The sweep glides smoothly from left to right.</p>
+      <div class="bal"><i></i></div><div class="bl"><span>Left</span><span>Center</span><span>Right</span></div>
+      <div class="row">
+        <button class="btn" data-play='{"mode":"alt","freq":600,"pan":-1,"label":"Stereo alternate · 600 Hz"}'>Alternate left / right</button>
+        <button class="btn" data-play='{"mode":"sweep","freq":600,"pan":0,"label":"Stereo pan sweep · 600 Hz"}'>Pan sweep</button></div></div>
+  </div>
+
+  <div class="card"><h2>Frequency generator</h2>
+    <div class="big" id="fRead">1000 Hz</div><p class="small mut" id="fNote">Sine wave through both channels.</p>
+    <div class="row"><label>Frequency <select id="fSel"></select></label>
+      <label>Custom (20–20000 Hz) <input type="number" id="fCustom" min="20" max="20000" step="1" inputmode="numeric"></label>
+      <button class="btn ghost" id="fApply">Use custom</button></div>
+    <div class="row"><button class="btn" id="fPlay">Play</button><button class="btn ghost" id="fStop">Stop</button></div></div>
+
+  <div class="g2">
+    <div class="card"><h2>Bass test</h2><div class="big" id="bRead">— Hz</div>
+      <p class="mut small">Many headphones roll off below 40 Hz, so quiet or absent tones at the lowest steps are common.</p>
+      <div class="row">
+        <button class="btn" data-play='{"kind":"osc","freq":30,"bass":1,"label":"Bass · 30 Hz"}'>30 Hz</button>
+        <button class="btn" data-play='{"kind":"osc","freq":40,"bass":1,"label":"Bass · 40 Hz"}'>40 Hz</button>
+        <button class="btn" data-play='{"kind":"osc","freq":60,"bass":1,"label":"Bass · 60 Hz"}'>60 Hz</button>
+        <button class="btn" data-play='{"kind":"osc","freq":80,"bass":1,"label":"Bass · 80 Hz"}'>80 Hz</button>
+        <button class="btn" data-play='{"kind":"osc","freq":100,"bass":1,"label":"Bass · 100 Hz"}'>100 Hz</button></div>
+      <div class="row"><button class="btn ghost" data-play='{"mode":"bass","bass":1,"pan":0,"label":"Bass sweep · 20 → 200 Hz"}'>Bass sweep 20 → 200 Hz (12 s)</button></div></div>
+
+    <div class="card"><h2>Audio quality</h2><p class="mut small">Noise and test waveforms for checking distortion, rattle and tonal balance. Waveforms play at 440 Hz.</p>
+      <div class="row">
+        <button class="btn" data-play='{"kind":"white","label":"White noise"}'>White noise</button>
+        <button class="btn" data-play='{"kind":"pink","label":"Pink noise"}'>Pink noise</button></div>
+      <div class="row">
+        <button class="btn" data-play='{"kind":"osc","type":"sine","freq":440,"label":"Sine wave · 440 Hz"}'>Sine</button>
+        <button class="btn" data-play='{"kind":"osc","type":"square","freq":440,"label":"Square wave · 440 Hz"}'>Square</button>
+        <button class="btn" data-play='{"kind":"osc","type":"triangle","freq":440,"label":"Triangle wave · 440 Hz"}'>Triangle</button></div></div>
+  </div>
+
+  <div class="card"><h2>Stereo balance</h2>
+    <p class="mut small">Play a sound, then move the slider until it feels centered. A centered slider means equal level in both ears; a large offset can point to a driver mismatch, a poor seal or an uneven ear.</p>
+    <div class="bal"><i></i></div><div class="bl"><span>Left</span><span>Center</span><span>Right</span></div>
+    <div class="row"><label>Balance <input type="range" id="bal" min="-100" max="100" step="1" value="0"></label><output id="balOut">Center</output>
+      <button class="btn ghost" id="balC">Center</button></div>
+    <div class="row">
+      <button class="btn" data-play='{"kind":"pink","balance":1,"label":"Balance test · pink noise"}'>Play pink noise</button>
+      <button class="btn" data-play='{"kind":"osc","freq":1000,"balance":1,"label":"Balance test · 1 kHz"}'>Play 1 kHz tone</button></div></div>
+
+  <div class="nowbar"><div><span class="chip ok" id="hpChip">READY</span> <span id="nowTxt" class="mut">Nothing playing</span></div>
+    <label>Volume <input type="range" id="vol" min="0" max="100" value="25" aria-label="Test volume"><output id="volOut">25%</output></label>
+    <button class="btn" id="stopAll">Stop</button></div>
+  <p class="small mut">Volume is relative to your system volume. Keep it low and raise it gradually.</p>
+</section>
+
+<section id="p-mic" hidden>
+  <h1>Microphone test</h1>
+  <div class="card micBlock"></div>
+  <div class="g2">
+    <div class="card"><h2>Live waveform</h2><canvas data-v="wave" role="img" aria-label="Live microphone waveform"></canvas></div>
+    <div class="card"><h2>Spectrum</h2><canvas data-v="spec" role="img" aria-label="Live microphone spectrum"></canvas></div>
+  </div>
+  <div class="card"><h2>Record &amp; listen back</h2><p class="mut small">The best way to judge quality is to hear it. Record a few seconds of your voice, then play it back through your headphones or speakers. Listen for hiss, crackle, distortion and a muffled sound.</p><div id="recC"></div></div>
+  <div class="card"><h2>Input level</h2>
+    <div class="meter" role="img" aria-label="Input level meter"><i id="lvBar"></i><b id="pkMark"></b></div>
+    <div class="ticks"><span>−60</span><span>−48</span><span>−36</span><span>−24</span><span>−12</span><span>0 dBFS</span></div>
+    <div class="stats">
+      <div><small>Level (RMS)</small><b id="lvTxt">—</b></div><div><small>Peak</small><b id="pkTxt">—</b></div>
+      <div><small>Average</small><b id="avTxt">—</b></div><div><small>Input activity</small><b><span class="dot" id="act"></span><span id="actTxt">No signal</span></b></div></div>
+    <div class="row"><button class="btn ghost" id="mReset">Reset peak &amp; average</button></div>
+    <p class="small mut">Levels are digital dBFS, where 0 dBFS is the loudest value the browser can record. They are approximate and are not sound pressure (dB SPL). Activity lights above −50 dBFS. Average covers the time since you started or reset.</p></div>
+</section>
+
+<section id="p-studio" hidden>
+  <h1>Recording studio</h1>
+  <div class="card micBlock"></div>
+  <div class="g2">
+    <div class="card"><h2>Record &amp; play back</h2><div id="recA"></div></div>
+    <div class="card"><h2>Voice test</h2><p class="mut small">Press start, then read the sentence aloud at a normal volume. The test records for 10 seconds, then you can play it back and download the audio and a report of the measured levels.</p>
+      <div class="prompt">“The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.”</div><div id="recB"></div></div>
+  </div>
+  <div class="card"><h2>Waveform</h2><canvas data-v="wave" role="img" aria-label="Recording waveform"></canvas></div>
+</section>
+
+<section id="p-diag" hidden>
+  <h1>Audio diagnostics</h1>
+  <div class="card micBlock"></div>
+  <div class="g2">
+    <div class="card"><h2>Guided checks</h2>
+      <p class="mut small">Each check listens through the selected microphone and reports what it measured. Results are approximate and describe this microphone, room and gain setting, not the microphone's frequency response.</p>
+      <div class="row"><button class="btn" id="tNoise">Background noise (4 s, stay quiet)</button><button class="btn" id="tSpeech">Speech level (6 s, talk normally)</button></div>
+      <div class="bar"><i id="dgProg"></i></div><p class="small mut" id="dgMsg">Pick a check to begin.</p>
+      <ul class="l" id="dgOut"></ul>
+      <p class="small mut">Recording playback check: record a clip in the <a href="#studio" style="color:var(--redh)">Recording Studio</a> and listen for crackle, dropouts or hiss.</p></div>
+    <div class="card"><h2>Live checks</h2><p class="mut small">Start the microphone to run these continuously. Silence and weak-signal checks refresh every 3 seconds.</p>
+      <ul class="l"><li>Clipping: <b id="fClip">Not running</b></li><li>Silence (below −80 dBFS): <b id="fSil">Not running</b></li><li>Weak signal (peak below −30 dBFS): <b id="fWeak">Not running</b></li></ul>
+      <div class="row"><button class="btn ghost" id="fReset">Reset checks</button></div></div>
+  </div>
+  <div class="card"><h2>Session history</h2><ul class="l" id="hist"></ul><p class="small mut">Kept in this tab only. It disappears when you close or reload the page.</p></div>
+</section>
+
+</main>
+<footer>GEARBLIZZ — BUILD FOR GAMERS. · audio.gearblizz.com</footer>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const ST={READY:'ok',TESTING:'run',RECORDING:'rec','PERMISSION REQUIRED':'warn','NOT AVAILABLE':'off'};
+const chip=(e,s)=>{e.textContent=s;e.className='chip '+ST[s]};
+let tt;const toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),4000)};
+const db=x=>x>1e-5?20*Math.log10(x):-100,pdb=p=>p>1e-10?10*Math.log10(p):-100;
+const fd=x=>(x<=-99.9?'−∞':x.toFixed(1).replace('-','−'))+' dBFS';
+const mmss=ms=>{const s=ms/1000;return String(Math.floor(s/60)).padStart(2,'0')+':'+(s%60).toFixed(1).padStart(4,'0')};
+const stamp=()=>new Date().toISOString().replace(/[-:]/g,'').replace('T','-').slice(0,15);
+const mk=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
+function download(blob,name){const u=URL.createObjectURL(blob),a=mk('a');a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}
+
+/* ---------- session history ---------- */
+const hist=[];
+function log(type,detail){hist.unshift({t:new Date(),type,detail});hist.length=Math.min(hist.length,100);renderHist()}
+function renderHist(){const ul=$('hist');ul.textContent='';if(!hist.length){ul.append(mk('li','mut','No tests run yet in this session.'));return}
+  hist.forEach(h=>{const li=mk('li');li.append(mk('b',null,h.t.toLocaleTimeString()+' · '+h.type),' '+h.detail);ul.append(li)})}
+
+/* ---------- navigation ---------- */
+const MICP=['mic','studio','diag'];
+function route(){let p=location.hash.slice(1);if(!$('p-'+p))p='overview';
+  $$('main>section').forEach(s=>s.hidden=s.id!=='p-'+p);
+  $$('#nav a').forEach(a=>a.getAttribute('href')==='#'+p?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current'));
+  if(!MICP.includes(p))micStop();if(p!=='headphone')stopTone();
+  scrollTo(0,0);drawAll()}
+addEventListener('hashchange',route);
+const burger=$('burger'),menu=$('menu');
+function menuSet(o){menu.classList.toggle('open',o);burger.setAttribute('aria-expanded',o);burger.setAttribute('aria-label',o?'Close menu':'Open menu')}
+burger.onclick=()=>menuSet(!menu.classList.contains('open'));
+$$('#nav a').forEach(a=>a.addEventListener('click',()=>menuSet(false)));
+addEventListener('keydown',e=>{if(e.key==='Escape'&&menu.classList.contains('open')){menuSet(false);burger.focus()}});
+matchMedia('(min-width:821px)').addEventListener('change',e=>{if(e.matches)menuSet(false)});
+
+/* ---------- headphone engine ---------- */
+let ctx=null,cur=null,sink='';const nbuf={};
+const gainOf=v=>.5*Math.pow(v/100,1.5);
+function AC(){if(!ctx){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;ctx=new C();if(sink&&ctx.setSinkId)ctx.setSinkId(sink).catch(()=>toast('Could not switch output device.'));audioUI()}
+  if(ctx.state==='suspended')ctx.resume();return ctx}
+function audioUI(){const C=window.AudioContext||window.webkitAudioContext;
+  if(!C){chip($('audChip'),'NOT AVAILABLE');$('audTxt').textContent='Web Audio is not supported in this browser.';return}
+  chip($('audChip'),'READY');$('audTxt').textContent=ctx?`Running at ${ctx.sampleRate} Hz (${ctx.state}).`:'Web Audio is supported. It starts with your first test.'}
+function noise(kind){if(nbuf[kind])return nbuf[kind];const n=ctx.sampleRate*4,b=ctx.createBuffer(1,n,ctx.sampleRate),d=b.getChannelData(0);
+  if(kind==='white')for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*.5;
+  else{let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;for(let i=0;i<n;i++){const w=Math.random()*2-1;
+    b0=.99886*b0+w*.0555179;b1=.99332*b1+w*.0750759;b2=.969*b2+w*.153852;b3=.8665*b3+w*.3104856;b4=.55*b4+w*.5329522;b5=-.7616*b5-w*.016898;
+    d[i]=(b0+b1+b2+b3+b4+b5+b6+w*.5362)*.11;b6=w*.115926}}
+  return nbuf[kind]=b}
+function setPan(p){const on=p!==null;$$('.lampL').forEach(e=>e.classList.toggle('on',on&&p<=.3));$$('.lampR').forEach(e=>e.classList.toggle('on',on&&p>=-.3));
+  $$('.bal i').forEach(e=>{e.style.left=on?(p+1)*50+'%':'50%';e.style.opacity=on?1:.3})}
+function readouts(){const g=cur&&cur.btn===$('fPlay');$('fRead').textContent=gen.f+' Hz';$('fRead').classList.toggle('dim',!g);
+  $('fNote').textContent=(g?'Playing a sine wave through both channels. ':'Stopped. Sine wave through both channels. ')+(gen.f>=12000?'Many adults cannot hear above 15–18 kHz, so silence here is normal.':'');
+  if(!cur||!cur.s.bass)$('bRead').textContent='— Hz'}
+function play(s,btn){
+  if(!$('ack').checked){$('warnBox').classList.add('flash');setTimeout(()=>$('warnBox').classList.remove('flash'),900);$('ack').focus();toast('Confirm the volume warning first.');return false}
+  const c=AC();if(!c||!c.createStereoPanner){chip($('hpChip'),'NOT AVAILABLE');toast('Stereo audio playback is not supported in this browser.');return false}
+  if(s.kind==='osc'&&s.freq>=c.sampleRate/2){toast('That frequency is above what this audio device can play.');return false}
+  stopTone();s=Object.assign({},s);if(s.balance)s.pan=$('bal').value/100;
+  const g=c.createGain(),p=c.createStereoPanner();g.gain.value=0;p.pan.value=s.pan||0;let src,osc=null;
+  if(s.kind==='osc'||s.mode){osc=src=c.createOscillator();osc.type=s.type||'sine';osc.frequency.value=s.mode==='bass'?20:s.freq}
+  else{src=c.createBufferSource();src.buffer=noise(s.kind);src.loop=true}
+  src.connect(g);g.connect(p);p.connect(c.destination);const now=c.currentTime;
+  g.gain.setTargetAtTime(gainOf($('vol').value),now,.02);
+  if(s.mode==='bass'){osc.frequency.setValueAtTime(20,now);osc.frequency.exponentialRampToValueAtTime(200,now+12)}
+  src.start();cur={src,osc,g,p,s,btn,t0:now};
+  if(btn)btn.setAttribute('aria-pressed','true');
+  chip($('hpChip'),'TESTING');$('nowTxt').textContent=s.label;if(s.bass&&s.freq)$('bRead').textContent=s.freq+' Hz';
+  log('Headphone',s.label);setPan(s.mode==='alt'?-1:s.pan||0);readouts();kick();return true}
+function stopTone(){if(!cur)return;const c=cur;cur=null;const t=ctx.currentTime;
+  c.g.gain.cancelScheduledValues(t);c.g.gain.setTargetAtTime(0,t,.015);try{c.src.stop(t+.12)}catch{}c.src.onended=()=>{c.g.disconnect();c.p.disconnect()};
+  if(c.btn)c.btn.setAttribute('aria-pressed','false');
+  chip($('hpChip'),'READY');$('nowTxt').textContent='Nothing playing';setPan(null);readouts()}
+function tickTone(){if(!cur)return;const c=cur,t=ctx.currentTime-c.t0,s=c.s;
+  if(s.mode==='alt'){const side=Math.floor(t/.8)%2?1:-1;if(side!==c.side){c.side=side;c.p.pan.setTargetAtTime(side,ctx.currentTime,.01);setPan(side)}}
+  else if(s.mode==='sweep'){const p=Math.sin(t*2*Math.PI/6);c.p.pan.value=p;setPan(p)}
+  else if(s.mode==='bass'){if(t>=12.1){stopTone();return}const f=Math.round(20*Math.pow(10,t/12));$('bRead').textContent=f+' Hz';$('nowTxt').textContent='Bass sweep · '+f+' Hz'}}
+$$('[data-play]').forEach(b=>b.onclick=()=>{if(cur&&cur.btn===b)stopTone();else play(JSON.parse(b.dataset.play),b)});
+$('stopAll').onclick=stopTone;
+$('vol').oninput=e=>{$('volOut').textContent=e.target.value+'%';if(cur)cur.g.gain.setTargetAtTime(gainOf(e.target.value),ctx.currentTime,.02)};
+$('bal').oninput=e=>{const v=+e.target.value;$('balOut').textContent=v===0?'Center':(v<0?'Left ':'Right ')+Math.abs(v)+'%';
+  if(cur&&cur.s.balance){cur.p.pan.setTargetAtTime(v/100,ctx.currentTime,.01);setPan(v/100)}};
+$('balC').onclick=()=>{$('bal').value=0;$('bal').oninput({target:$('bal')})};
+/* generator */
+const gen={f:1000};
+[20,50,100,250,500,1000,2000,4000,8000,10000,12000,15000,18000,20000].forEach(f=>$('fSel').append(new Option(f>=1000?f/1000+' kHz':f+' Hz',f)));
+$('fSel').value=1000;
+function genSet(f){gen.f=f;if(cur&&cur.btn===$('fPlay')){cur.osc.frequency.setTargetAtTime(f,ctx.currentTime,.01);cur.s.freq=f}readouts()}
+$('fSel').onchange=e=>{$('fCustom').value='';genSet(+e.target.value)};
+$('fApply').onclick=()=>{const v=parseFloat($('fCustom').value);if(!(v>=20&&v<=20000)){toast('Enter a frequency between 20 and 20000 Hz.');return}
+  if(ctx&&v>=ctx.sampleRate/2){toast('That frequency is above what this audio device can play.');return}genSet(Math.round(v*10)/10)};
+$('fCustom').onkeydown=e=>{if(e.key==='Enter')$('fApply').click()};
+$('fPlay').onclick=()=>{if(cur&&cur.btn===$('fPlay'))return;play({kind:'osc',freq:gen.f,pan:0,label:'Frequency generator'},$('fPlay'));if(cur&&cur.btn===$('fPlay'))cur.s.label='Frequency generator · live'};
+$('fStop').onclick=stopTone;
+$('sink').onchange=e=>{sink=e.target.value;if(ctx&&ctx.setSinkId)ctx.setSinkId(sink).catch(()=>toast('Could not switch output device.'))};
+
+/* ---------- microphone engine ---------- */
+const mic={stream:null,an:null,src:null,tb:null,fb:null,subs:new Set(),label:'',fr:null};
+const M={peak:-100,sumP:0,n:0};const recs=new Set();
+const S={dev:'',raw:true};let perm='unknown',busy=false;
+const MICBLOCK=`<div class="row"><span class="chip off micChip">…</span><span class="mut micMsg"></span></div>
+<div class="row"><label>Input device <select class="micSel"></select></label></div>
+<label class="chk"><input type="checkbox" class="rawChk" checked> Raw input: turn off echo cancellation, noise suppression and auto gain, for honest test results</label>
+<div class="row"><button class="btn micStart">Start microphone</button><button class="btn ghost micStop">Stop microphone</button></div>
+<p class="small mut">Your microphone audio stays on your device. GearBlizz does not upload, store or transmit your recordings.</p>`;
+$$('.micBlock').forEach(b=>b.innerHTML=MICBLOCK);
+const hasMic=()=>!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);
+function updateMic(msg){let s,t;const act=!!mic.stream,rc=recs.size>0;
+  if(!hasMic()){s='NOT AVAILABLE';t='This browser or page cannot access a microphone. Use a current Chrome, Edge or Firefox over HTTPS.'}
+  else if(rc){s='RECORDING';t='Recording from '+(mic.label||'microphone')+'.'}
+  else if(act){s='TESTING';t='Listening to '+(mic.label||'microphone')+'.'}
+  else if(perm==='denied'){s='PERMISSION REQUIRED';t='Microphone access is blocked. Allow it in your browser’s site settings, then press Start.'}
+  else if(perm==='granted'){s='READY';t='Permission granted. Press Start to listen.'}
+  else{s='PERMISSION REQUIRED';t='Press Start and allow microphone access when your browser asks.'}
+  $$('.micChip').forEach(e=>chip(e,s));$$('.micMsg').forEach(e=>e.textContent=msg||t);
+  $$('.micStart').forEach(b=>b.disabled=act||s==='NOT AVAILABLE');$$('.micStop').forEach(b=>b.disabled=!act);
+  chip($('permChip'),act||rc?'READY':s);$('permTxt').textContent=msg||t}
+function errText(e){const n=e&&e.name;
+  if(n==='NotAllowedError'||n==='SecurityError')return'Microphone access was blocked. Allow it in your browser’s site settings, then try again.';
+  if(n==='NotFoundError')return'No microphone was found. Connect one and try again.';
+  if(n==='NotReadableError')return'The microphone is in use by another app or could not be opened.';
+  return'Could not start the microphone: '+((e&&e.message)||n||'unknown error')}
+async function getStream(){const a={echoCancellation:!S.raw,noiseSuppression:!S.raw,autoGainControl:!S.raw};
+  try{return await navigator.mediaDevices.getUserMedia({audio:S.dev?Object.assign({deviceId:{exact:S.dev}},a):a})}
+  catch(e){if(S.dev&&(e.name==='OverconstrainedError'||e.name==='NotFoundError')){S.dev='';$$('.micSel').forEach(s=>s.value='');toast('That device is unavailable. Using the system default.');return getStream()}throw e}}
+async function micStart(){if(mic.stream)return true;if(busy)return false;
+  if(!hasMic()){updateMic();return false}
+  busy=true;let st;
+  try{st=await getStream()}catch(e){busy=false;perm=e.name==='NotAllowedError'?'denied':perm;updateMic(errText(e));return false}
+  busy=false;const c=AC();if(!c){st.getTracks().forEach(t=>t.stop());updateMic('Web Audio is not supported in this browser.');return false}
+  mic.stream=st;mic.an=c.createAnalyser();mic.an.fftSize=2048;mic.an.smoothingTimeConstant=.8;
+  mic.src=c.createMediaStreamSource(st);mic.src.connect(mic.an);mic.tb=new Float32Array(mic.an.fftSize);mic.fb=new Uint8Array(mic.an.frequencyBinCount);
+  const tr=st.getAudioTracks()[0];mic.label=tr.label||'microphone';tr.onended=()=>{toast('The microphone was disconnected or stopped.');micStop()};
+  perm='granted';resetM();updateMic();populateDevices();kick();log('Microphone','Started: '+mic.label);return true}
+function micStop(){recs.forEach(r=>r.stop());if(!mic.stream)return;
+  mic.stream.getTracks().forEach(t=>{t.onended=null;t.stop()});try{mic.src.disconnect()}catch{}
+  mic.stream=null;mic.an=null;mic.fr=null;mic.subs.clear();updateMic();setFlags(false);meterOff();drawAll()}
+$$('.micStart').forEach(b=>b.onclick=micStart);$$('.micStop').forEach(b=>b.onclick=micStop);
+$$('.micSel').forEach(s=>s.onchange=async()=>{S.dev=s.value;$$('.micSel').forEach(o=>o.value=s.value);restartMic()});
+$$('.rawChk').forEach(c=>c.onchange=()=>{S.raw=c.checked;$$('.rawChk').forEach(o=>o.checked=c.checked);restartMic()});
+async function restartMic(){if(recs.size){toast('Stop recording before changing input settings.');return}if(mic.stream){micStop();await micStart()}}
+async function populateDevices(){if(!navigator.mediaDevices||!navigator.mediaDevices.enumerateDevices)return;
+  let l=[];try{l=await navigator.mediaDevices.enumerateDevices()}catch{}
+  const ins=l.filter(d=>d.kind==='audioinput'),outs=l.filter(d=>d.kind==='audiooutput'),named=ins.some(d=>d.label);
+  $$('.micSel').forEach(s=>{s.textContent='';s.append(new Option('System default',''));ins.forEach((d,i)=>s.append(new Option(d.label||'Microphone '+(i+1),d.deviceId)));
+    if([...s.options].some(o=>o.value===S.dev))s.value=S.dev});
+  $('inCount').textContent=ins.length;$('outCount').textContent=outs.length;
+  const il=$('inList'),ol=$('outList');il.textContent='';ol.textContent='';
+  ins.forEach((d,i)=>il.append(mk('li',null,d.label||'Microphone '+(i+1)+' (name hidden until access is granted)')));
+  if(!ins.length)il.append(mk('li','mut','No microphones reported.'));
+  outs.forEach((d,i)=>ol.append(mk('li',null,d.label||'Output '+(i+1)+' (name hidden until access is granted)')));
+  if(!outs.length)ol.append(mk('li','mut','This browser does not list output devices. Sound plays through your system default output.'));
+  const can=window.AudioContext&&AudioContext.prototype.setSinkId&&outs.length;$('sinkRow').hidden=!can;
+  if(can){const s=$('sink');s.textContent='';s.append(new Option('System default',''));outs.forEach((d,i)=>s.append(new Option(d.label||'Output '+(i+1),d.deviceId)));s.value=sink}
+  if(!named&&ins.length)il.append(mk('li','mut','Names appear after you allow microphone access.'))}
+$('detect').onclick=async()=>{if(!mic.stream){if(!hasMic()){updateMic();return}
+    try{const st=await getStream();st.getTracks().forEach(t=>t.stop());perm='granted'}catch(e){perm=e.name==='NotAllowedError'?'denied':perm;updateMic(errText(e))}}
+  await populateDevices();updateMic();log('Devices','Detected '+$('inCount').textContent+' input(s), '+$('outCount').textContent+' output(s)')};
+if(navigator.mediaDevices&&navigator.mediaDevices.addEventListener)navigator.mediaDevices.addEventListener('devicechange',populateDevices);
+if(navigator.permissions&&navigator.permissions.query)navigator.permissions.query({name:'microphone'}).then(p=>{const f=()=>{perm=p.state;updateMic()};f();p.onchange=f}).catch(()=>{});
+
+/* ---------- analysis ---------- */
+const newAcc=()=>({n:0,sumP:0,peak:-100,clipS:0,runs:0,an:0,aP:0});
+function acc(a,f){a.n++;a.sumP+=f.pow;if(f.peakDb>a.peak)a.peak=f.peakDb;a.clipS+=f.clipS;a.runs+=f.runs;if(f.rmsDb>-45){a.an++;a.aP+=f.pow}}
+const avgDb=a=>a.n?pdb(a.sumP/a.n):-100,actDb=a=>a.an?pdb(a.aP/a.an):null;
+function verdict(a){if(!a.n)return{l:'warn',t:'No level data was captured.'};
+  if(a.peak<=-80)return{l:'bad',t:'No signal (digital silence). The microphone may be muted, disconnected, or the wrong device is selected.'};
+  if(a.clipS>0)return{l:'bad',t:`Clipping: ${a.clipS} samples reached full scale. Lower the input gain or move away from the microphone.`};
+  if(a.peak<-30)return{l:'warn',t:'Low input signal: peaks stayed below −30 dBFS. Raise the input gain or speak closer.'};
+  return{l:'ok',t:'Level looks usable: peaks between −30 dBFS and full scale without clipping.'}}
+function resetM(){M.peak=-100;M.sumP=0;M.n=0;FL.win=0;FL.pk=-100;FL.clip=0;FL.sil='Measuring…';FL.weak='Measuring…'}
+const FL={win:0,pk:-100,clip:0,sil:'',weak:''};let lvS=-100,uiN=0;
+function setFlags(on){const q=(id,t,bad)=>{const e=$(id);e.textContent=t;e.style.color=bad?'var(--redh)':'var(--ok)'};
+  if(!on){['fClip','fSil','fWeak'].forEach(id=>{$(id).textContent='Not running';$(id).style.color=''});return}
+  q('fClip',FL.clip?`Detected (${FL.clip} samples at full scale)`:'Clear',FL.clip);
+  q('fSil',FL.sil,FL.sil==='Detected');q('fWeak',FL.weak,FL.weak==='Detected');
+  if(FL.sil==='Measuring…'){$('fSil').style.color='';$('fWeak').style.color=''}}
+function meterOff(){$('lvBar').style.width='0';['lvTxt','pkTxt','avTxt'].forEach(i=>$(i).textContent='—');$('act').classList.remove('on');$('actTxt').textContent='No signal';$('pkMark').style.left='0'}
+function micFrame(){const tb=mic.tb;mic.an.getFloatTimeDomainData(tb);let sum=0,pk=0,cs=0,run=0,runs=0;
+  for(let i=0;i<tb.length;i++){const x=tb[i],v=x<0?-x:x;sum+=x*x;if(v>pk)pk=v;if(v>=.999)cs++;if(v>=.99){if(++run===3)runs++}else run=0}
+  const pow=sum/tb.length,fr={pow,rmsDb:db(Math.sqrt(pow)),peakDb:db(pk),clipS:cs,runs};mic.fr=fr;
+  M.peak=Math.max(M.peak,fr.peakDb);M.sumP+=pow;M.n++;
+  const now=performance.now();if(!FL.win)FL.win=now;FL.pk=Math.max(FL.pk,fr.peakDb);FL.clip+=cs;
+  if(now-FL.win>=3000){FL.sil=FL.pk<=-80?'Detected':'Clear';FL.weak=FL.pk>-80&&FL.pk<-30?'Detected':'Clear';FL.win=now;FL.pk=-100}
+  lvS=Math.max(fr.rmsDb,lvS-1.5);const pc=d=>Math.max(0,Math.min(100,(d+60)/60*100));
+  $('lvBar').style.width=pc(lvS)+'%';$('lvBar').style.background=lvS>-3?'var(--red)':lvS>-12?'var(--warn)':'var(--ok)';$('pkMark').style.left=pc(M.peak)+'%';
+  if(++uiN%6===0){$('lvTxt').textContent=fd(fr.rmsDb);$('pkTxt').textContent=fd(M.peak);$('avTxt').textContent=fd(pdb(M.sumP/M.n));
+    const on=fr.rmsDb>-50;$('act').classList.toggle('on',on);$('actTxt').textContent=on?'Signal present':'No signal';setFlags(true)}
+  mic.subs.forEach(f=>f(fr))}
+$('mReset').onclick=()=>{resetM();lvS=-100;toast('Peak and average reset.')};
+$('fReset').onclick=()=>{resetM();setFlags(!!mic.stream)};
+
+/* ---------- drawing ---------- */
+function fit(c){const r=devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;if(c.width!==Math.round(w*r)||c.height!==Math.round(h*r)){c.width=Math.round(w*r);c.height=Math.round(h*r)}
+  const g=c.getContext('2d');g.setTransform(r,0,0,r,0,0);g.clearRect(0,0,w,h);return[g,w,h]}
+function drawAll(){$$('canvas[data-v]').forEach(c=>{if(!c.offsetWidth)return;const[g,w,h]=fit(c);
+  g.strokeStyle='#292C31';g.lineWidth=1;g.beginPath();g.moveTo(0,h/2);g.lineTo(w,h/2);g.stroke();
+  if(!mic.stream){g.fillStyle='#9298A2';g.font='14px system-ui,sans-serif';g.textAlign='center';g.fillText('Microphone off. Press Start to see live input.',w/2,h/2-8);return}
+  if(c.dataset.v==='wave'){g.strokeStyle='#ED1C24';g.lineWidth=2;g.beginPath();const tb=mic.tb,step=tb.length/w;
+    for(let x=0;x<w;x++){const v=tb[Math.floor(x*step)];const y=h/2-v*h/2*.95;x?g.lineTo(x,y):g.moveTo(x,y)}g.stroke()}
+  else{mic.an.getByteFrequencyData(mic.fb);const sr=ctx.sampleRate,N=64,bw=w/N;g.fillStyle='#ED1C24';
+    for(let i=0;i<N;i++){const f=50*Math.pow((sr/2)/50,i/N),v=mic.fb[Math.min(mic.fb.length-1,Math.floor(f/(sr/2)*mic.fb.length))]/255;g.fillRect(i*bw+1,h-v*(h-16),bw-2,v*(h-16))}
+    g.fillStyle='#9298A2';g.font='11px system-ui,sans-serif';g.textAlign='left';[100,1000,10000].forEach(f=>{const x=Math.log(f/50)/Math.log((sr/2)/50)*w;g.fillText(f>=1000?f/1000+'k':f,x,12)})}})}
+let running=false;
+function kick(){if(!running){running=true;requestAnimationFrame(step)}}
+function step(){tickTone();if(mic.stream)micFrame();drawAll();if(cur||mic.stream)requestAnimationFrame(step);else running=false}
+addEventListener('resize',drawAll);
+
+/* ---------- recorder ---------- */
+const MIMES=['audio/webm;codecs=opus','audio/ogg;codecs=opus','audio/mp4','audio/webm'];
+const extOf=t=>/ogg/.test(t)?'ogg':/mp4|aac/.test(t)?'m4a':/webm/.test(t)?'webm':/wav/.test(t)?'wav':'audio';
+function recUI(p,voice){return`<div class="row"><button class="btn" id="${p}Rec">${voice?'Start voice test':'Record'}</button><button class="btn ghost" id="${p}Stop" disabled>Stop</button><span class="chip ok" id="${p}Chip">READY</span><span class="time" id="${p}Time">00:00.0</span></div>
+${voice?`<div class="bar"><i id="${p}Prog"></i></div>`:''}<p class="small mut" id="${p}Info">No recording yet.</p>
+<div class="row"><button class="btn ghost" id="${p}Play" disabled>Play</button><button class="btn ghost" id="${p}Dl" disabled>Download recording</button>${voice?`<button class="btn ghost" id="${p}Rep" disabled>Download report</button>`:''}<span class="time" id="${p}Pos"></span></div>${voice?`<pre class="out" id="${p}Out" hidden></pre>`:''}`}
+function Recorder(p,voice,max){
+  $('rec'+p.slice(1)).innerHTML=recUI(p,voice);const q=s=>$(p+s);
+  let blob=null,url=null,audio=null,ms=0,mr=null,ch=[],t0=0,iv=0,a=null,sub=null,own=false,report='';
+  const api={stop(){if(mr&&mr.state!=='inactive'){ms=performance.now()-t0;mr.stop()}},clear};
+  function clear(){api.stop();if(audio){audio.pause();audio=null}if(url)URL.revokeObjectURL(url);url=blob=null;report='';
+    q('Play').disabled=q('Dl').disabled=true;q('Play').textContent='Play';q('Time').textContent='00:00.0';q('Pos').textContent='';q('Info').textContent='No recording yet.';
+    if(voice){q('Rep').disabled=true;q('Out').hidden=true;q('Prog').style.width='0'}}
+  async function start(){if(typeof MediaRecorder==='undefined'){chip(q('Chip'),'NOT AVAILABLE');toast('Recording is not supported in this browser.');return}
+    if(recs.size){toast('Another recording is already running.');return}
+    own=!mic.stream;if(!(await micStart()))return;clear();
+    const mime=MIMES.find(m=>MediaRecorder.isTypeSupported(m));
+    try{mr=new MediaRecorder(mic.stream,mime?{mimeType:mime}:undefined)}catch(e){toast('Could not start the recorder: '+e.message);if(own)micStop();return}
+    ch=[];a=newAcc();sub=f=>acc(a,f);mic.subs.add(sub);
+    mr.ondataavailable=e=>{if(e.data&&e.data.size)ch.push(e.data)};mr.onstop=finish;mr.onerror=()=>{toast('Recording error.');api.stop()};
+    mr.start(250);t0=performance.now();recs.add(api);
+    iv=setInterval(()=>{const e=performance.now()-t0;q('Time').textContent=mmss(e);if(voice)q('Prog').style.width=Math.min(100,e/max*100)+'%';if(max&&e>=max)api.stop()},100);
+    q('Rec').disabled=true;q('Stop').disabled=false;chip(q('Chip'),'RECORDING');updateMic()}
+  function finish(){clearInterval(iv);mic.subs.delete(sub);recs.delete(api);
+    const type=mr.mimeType||(ch[0]&&ch[0].type)||'audio/webm';blob=new Blob(ch,{type});url=URL.createObjectURL(blob);audio=new Audio(url);
+    audio.onplay=()=>q('Play').textContent='Pause';
+    audio.onpause=()=>q('Play').textContent=audio.currentTime>0&&!audio.ended?'Resume':'Play';
+    audio.onended=()=>q('Play').textContent='Play';
+    audio.ontimeupdate=()=>q('Pos').textContent=mmss(audio.currentTime*1000)+' / '+mmss(ms);
+    q('Time').textContent=mmss(ms);q('Info').textContent=`${mmss(ms)} · ${type} · ${(blob.size/1024).toFixed(0)} KB`;
+    q('Play').disabled=q('Dl').disabled=!blob.size;q('Rec').disabled=false;q('Stop').disabled=true;chip(q('Chip'),'READY');
+    const v=verdict(a);log(voice?'Voice test':'Recording',`${mmss(ms)} ${extOf(type).toUpperCase()}, peak ${fd(a.peak)}`);
+    if(voice){const ad=actDb(a);report=['GearBlizz Audio Lab — Voice test report','Date: '+new Date().toLocaleString(),'Microphone: '+mic.label,
+      'Input processing: '+(S.raw?'Raw (echo cancellation, noise suppression and auto gain off)':'Browser defaults'),'Duration: '+mmss(ms),'Format: '+type,
+      'Peak level: '+fd(a.peak),'Average level: '+fd(avgDb(a)),'Speech level (frames above −45 dBFS): '+(ad==null?'none detected':fd(ad)),
+      `Clipped samples: ${a.clipS} · Flat-topped runs: ${a.runs}`,'Assessment: '+v.t,'',
+      'dBFS values are digital levels relative to full scale, not sound pressure (dB SPL). This is not a calibrated measurement of microphone quality.'].join('\n');
+      q('Out').textContent=report;q('Out').hidden=false;q('Rep').disabled=false}
+    mr=null;if(own&&mic.stream)micStop();else updateMic()}
+  q('Rec').onclick=start;q('Stop').onclick=api.stop;
+  q('Play').onclick=()=>{if(audio)audio.paused?audio.play():audio.pause()};
+  q('Dl').onclick=()=>blob&&download(blob,`gearblizz-${voice?'voice-test':'recording'}-${stamp()}.${extOf(blob.type)}`);
+  if(voice)q('Rep').onclick=()=>report&&download(new Blob([report],{type:'text/plain'}),`gearblizz-voice-report-${stamp()}.txt`);
+  return api}
+const recA=Recorder('rA',false,0),recB=Recorder('rB',true,10000),recC=Recorder('rC',false,0);
+
+/* ---------- diagnostics ---------- */
+const DG={noise:null};let dgBusy=false;
+async function runTest(kind){if(dgBusy||recs.size)return;dgBusy=true;const own=!mic.stream;
+  if(!(await micStart())){dgBusy=false;return}
+  const ms=kind==='noise'?4000:6000,a=newAcc(),sub=f=>acc(a,f);mic.subs.add(sub);
+  $('dgMsg').textContent=kind==='noise'?'Stay quiet…':'Speak at your normal volume…';$('dgOut').textContent='';
+  const t0=performance.now();
+  await new Promise(res=>{const t=()=>{const e=performance.now()-t0;$('dgProg').style.width=Math.min(100,e/ms*100)+'%';e>=ms||!mic.stream?res():requestAnimationFrame(t)};t()});
+  mic.subs.delete(sub);if(own)micStop();dgBusy=false;$('dgProg').style.width='0';
+  const out=[],add=(l,t)=>out.push({l,t});
+  if(!a.n){$('dgMsg').textContent='The check was interrupted. Try again.';return}
+  if(kind==='noise'){const av=avgDb(a);DG.noise=av;
+    add('ok',`Average noise level: ${fd(av)}, peak ${fd(a.peak)}`);
+    if(a.peak<=-80)add('bad','No signal at all. The microphone may be muted, disconnected or the wrong device is selected.');
+    else if(av<-60)add('ok','Quiet background. Noise floor is low.');
+    else if(av<-45)add('warn','Moderate background noise. Expect it to be audible in quiet passages.');
+    else add('bad','High background noise. Fans, traffic or high input gain may be affecting recordings.');
+    log('Diagnostics','Background noise '+fd(av))}
+  else{const v=verdict(a),ad=actDb(a);add('ok',`Peak ${fd(a.peak)}, average ${fd(avgDb(a))}`+(ad==null?'':`, speech level ${fd(ad)}`));add(v.l,v.t);
+    add(a.runs?'warn':'ok',a.runs?`Distortion indicator: ${a.runs} flat-topped runs of consecutive full-scale samples, a typical sign of clipping.`:'Distortion indicator: no flat-topped runs seen.');
+    if(ad!=null&&DG.noise!=null)add('ok',`Approximate speech-to-noise gap: ${(ad-DG.noise).toFixed(0)} dB (this room and gain only)`);
+    else if(ad==null)add('warn','No speech detected above −45 dBFS. Speak louder or closer, then run the check again.');
+    log('Diagnostics','Speech '+fd(a.peak)+' peak')}
+  $('dgMsg').textContent='Done. dBFS values are digital levels, not calibrated measurements.';
+  out.forEach(o=>$('dgOut').append(mk('li',o.l,o.t)))}
+$('tNoise').onclick=()=>runTest('noise');$('tSpeech').onclick=()=>runTest('speech');
+
+/* ---------- clear + lifecycle ---------- */
+$('clearAll').onclick=()=>{stopTone();micStop();recA.clear();recB.clear();recC.clear();hist.length=0;renderHist();DG.noise=null;resetM();meterOff();lvS=-100;
+  $('dgOut').textContent='';$('dgMsg').textContent='Pick a check to begin.';toast('All test data cleared.')};
+addEventListener('pagehide',()=>{micStop();stopTone()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&cur)stopTone()});
+$('ack').onchange=()=>{if(!$('ack').checked)stopTone()};
+
+audioUI();updateMic();renderHist();readouts();populateDevices();route();
+</script>
+</body>
+</html>
